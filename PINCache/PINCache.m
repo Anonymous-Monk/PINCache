@@ -211,6 +211,11 @@ static NSString * const PINCacheSharedName = @"PINCacheShared";
 
 - (void)removeAllObjects:(PINCacheBlock)block
 {
+    [self removeAllObjects:block maintainWeakReferences:YES];
+}
+
+- (void)removeAllObjects:(PINCacheBlock)block maintainWeakReferences:(BOOL)maintainWeakReferences
+{
     dispatch_group_t group = nil;
     PINMemoryCacheBlock memBlock = nil;
     PINDiskCacheBlock diskBlock = nil;
@@ -229,7 +234,7 @@ static NSString * const PINCacheSharedName = @"PINCacheShared";
         };
     }
     
-    [_memoryCache removeAllObjects:memBlock];
+    [_memoryCache removeAllObjects:memBlock maintainWeakReferences:maintainWeakReferences];
     [_diskCache removeAllObjects:diskBlock];
     
     if (group) {
@@ -330,10 +335,15 @@ static NSString * const PINCacheSharedName = @"PINCacheShared";
 
 - (void)removeObjectForKey:(NSString *)key
 {
+    [self removeObjectForKey:key maintainWeakReference:YES];
+}
+
+- (void)removeObjectForKey:(NSString *)key maintainWeakReference:(BOOL)maintainWeakReference
+{
     if (!key)
         return;
     
-    [_memoryCache removeObjectForKey:key];
+    [_memoryCache removeObjectForKey:key maintainWeakReference:maintainWeakReference];
     [_diskCache removeObjectForKey:key];
 }
 
@@ -348,7 +358,12 @@ static NSString * const PINCacheSharedName = @"PINCacheShared";
 
 - (void)removeAllObjects
 {
-    [_memoryCache removeAllObjects];
+    [self removeAllObjectsMaintainWeakReferences:YES];
+}
+
+- (void)removeAllObjectsMaintainWeakReferences:(BOOL)maintainWeakReferences
+{
+    [_memoryCache removeAllObjectsMaintainWeakReferences:maintainWeakReferences];
     [_diskCache removeAllObjects];
 }
 

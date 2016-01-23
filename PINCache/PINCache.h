@@ -147,9 +147,20 @@ typedef void (^PINCacheObjectBlock)(PINCache *cache, NSString *key, id __nullabl
  Removes all objects from the cache.This method returns immediately and executes the passed block after the
  cache has been cleared, potentially in parallel with other blocks on the <concurrentQueue>.
  
+ Defaults to maintaining weak references to removed objects.
+ 
  @param block A block to be executed concurrently after the cache has been cleared, or nil.
  */
 - (void)removeAllObjects:(nullable PINCacheBlock)block;
+
+/**
+ Removes all objects from the cache.This method returns immediately and executes the passed block after the
+ cache has been cleared, potentially in parallel with other blocks on the <concurrentQueue>.
+
+ @param block A block to be executed concurrently after the cache has been cleared, or nil.
+ @param maintainWeakReferences A boolean value that determines if objects are also removed from the weak cache.
+ */
+- (void)removeAllObjects:(PINCacheBlock)block maintainWeakReferences:(BOOL)maintainWeakReferences;
 
 #pragma mark -
 /// @name Synchronous Methods

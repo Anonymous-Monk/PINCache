@@ -224,7 +224,9 @@ typedef void (^PINMemoryCacheObjectBlock)(PINMemoryCache *cache, NSString *key, 
  
  @param block A block to be executed concurrently after the cache has been cleared, or nil.
  */
-- (void)removeAllObjects:(nullable PINMemoryCacheBlock)block;
+- (void)removeAllObjects:(nullable PINMemoryCacheBlock)block __attribute__ ((deprecated));
+
+- (void)removeAllObjects:(nullable PINMemoryCacheBlock)block maintainWeakReferences:(BOOL)maintainWeakReferences;
 
 /**
  Loops through all objects in the cache with reads and writes suspended. Calling serial methods which
@@ -277,6 +279,9 @@ typedef void (^PINMemoryCacheObjectBlock)(PINMemoryCache *cache, NSString *key, 
  */
 - (void)removeObjectForKey:(nullable NSString *)key;
 
+- (void)removeObjectForKey:(NSString *)key maintainWeakReference:(BOOL)maintainWeakReference;
+
+
 /**
  Removes all objects from the cache that have not been used since the specified date.
  This method blocks the calling thread until the cache has been trimmed.
@@ -304,7 +309,9 @@ typedef void (^PINMemoryCacheObjectBlock)(PINMemoryCache *cache, NSString *key, 
 /**
  Removes all objects from the cache. This method blocks the calling thread until the cache has been cleared.
  */
-- (void)removeAllObjects;
+- (void)removeAllObjects __attribute__((deprecated));
+
+- (void)removeAllObjectsMaintainWeakReferences:(BOOL)maintainWeakReferences;
 
 /**
  Loops through all objects in the cache within a memory lock (reads and writes are suspended during the enumeration).

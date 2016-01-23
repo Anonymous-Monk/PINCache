@@ -160,7 +160,7 @@ static NSString * const PINMemoryCachePrefix = @"com.pinterest.PINMemoryCache";
     #endif
 }
 
-- (void)removeObjectAndExecuteBlocksForKey:(NSString *)key
+- (void)removeObjectAndExecuteBlocksForKey:(NSString *)key maintainWeakReference:(BOOL)maintainWeakReference
 {
     [self lock];
         id object = _dictionary[key];
@@ -177,6 +177,10 @@ static NSString * const PINMemoryCachePrefix = @"com.pinterest.PINMemoryCache";
             _totalCost -= [cost unsignedIntegerValue];
 
         [_dictionary removeObjectForKey:key];
+
+        if (!maintainWeakReference)
+            [_weakMapTable removeObjectForKey:key];
+
         [_dates removeObjectForKey:key];
         [_costs removeObjectForKey:key];
     [self unlock];
@@ -198,7 +202,7 @@ static NSString * const PINMemoryCachePrefix = @"com.pinterest.PINMemoryCache";
             continue;
         
         if ([accessDate compare:trimDate] == NSOrderedAscending) { // older than trim date
-            [self removeObjectAndExecuteBlocksForKey:key];
+            [self removeObjectAndExecuteBlocksForKey:key maintainWeakReference:YES];
         } else {
             break;
         }
@@ -217,7 +221,7 @@ static NSString * const PINMemoryCachePrefix = @"com.pinterest.PINMemoryCache";
     }
 
     for (NSString *key in [keysSortedByCost reverseObjectEnumerator]) { // costliest objects first
-        [self removeObjectAndExecuteBlocksForKey:key];
+        [self removeObjectAndExecuteBlocksForKey:key maintainWeakReference:YES];
 
         [self lock];
             NSUInteger totalCost = _totalCost;
@@ -239,7 +243,7 @@ static NSString * const PINMemoryCachePrefix = @"com.pinterest.PINMemoryCache";
         return;
 
     for (NSString *key in keysSortedByDate) { // oldest objects first
-        [self removeObjectAndExecuteBlocksForKey:key];
+        [self removeObjectAndExecuteBlocksForKey:key maintainWeakReference:YES];
 
         [self lock];
             NSUInteger totalCost = _totalCost;
@@ -359,11 +363,16 @@ static NSString * const PINMemoryCachePrefix = @"com.pinterest.PINMemoryCache";
 
 - (void)removeAllObjects:(PINMemoryCacheBlock)block
 {
+    [self removeAllObjects:block maintainWeakReferences:YES];
+}
+
+- (void)removeAllObjects:(PINMemoryCacheBlock)block maintainWeakReferences:(BOOL)maintainWeakReferences
+{
     __weak PINMemoryCache *weakSelf = self;
     
     dispatch_async(_concurrentQueue, ^{
         PINMemoryCache *strongSelf = weakSelf;
-        [strongSelf removeAllObjects];
+        [strongSelf removeAllObjectsMaintainWeakReferences:maintainWeakReferences];
         
         if (block)
             block(strongSelf);
@@ -446,10 +455,15 @@ static NSString * const PINMemoryCachePrefix = @"com.pinterest.PINMemoryCache";
 
 - (void)removeObjectForKey:(NSString *)key
 {
+    [self removeObjectForKey:key maintainWeakReference:YES];
+}
+
+- (void)removeObjectForKey:(NSString *)key maintainWeakReference:(BOOL)maintainWeakReference
+{
     if (!key)
         return;
     
-    [self removeObjectAndExecuteBlocksForKey:key];
+    [self removeObjectAndExecuteBlocksForKey:key maintainWeakReference:maintainWeakReference];
 }
 
 - (void)trimToDate:(NSDate *)trimDate
@@ -477,6 +491,11 @@ static NSString * const PINMemoryCachePrefix = @"com.pinterest.PINMemoryCache";
 
 - (void)removeAllObjects
 {
+    [self removeAllObjectsMaintainWeakReferences:YES];
+}
+
+- (void)removeAllObjectsMaintainWeakReferences:(BOOL)maintainWeakReference
+{
     [self lock];
         PINMemoryCacheBlock willRemoveAllObjectsBlock = _willRemoveAllObjectsBlock;
         PINMemoryCacheBlock didRemoveAllObjectsBlock = _didRemoveAllObjectsBlock;
@@ -487,6 +506,10 @@ static NSString * const PINMemoryCachePrefix = @"com.pinterest.PINMemoryCache";
     
     [self lock];
         [_dictionary removeAllObjects];
+
+        if (!maintainWeakReference)
+            [_weakMapTable removeAllObjects];
+
         [_dates removeAllObjects];
         [_costs removeAllObjects];
     
